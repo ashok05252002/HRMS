@@ -8,17 +8,20 @@ import {
   BarChart3,
   Fingerprint,
   Award,
+  Users,
   // Filled-style icons for active state
   HomeIcon,
   BookMarked,
   Cog,
   AreaChart,
   Fingerprint as FingerprintFilled,
-  Award as AwardFilled
+  Award as AwardFilled,
+  Users as UsersFilled
 } from 'lucide-react';
 
 const menuData = [
     { icon: Home, filledIcon: HomeIcon, label: 'Dashboard', path: '/dashboard' },
+    { icon: Users, filledIcon: UsersFilled, label: 'Employees', path: '/employees' },
     { 
       icon: Award, 
       filledIcon: AwardFilled,

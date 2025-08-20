@@ -31,13 +31,17 @@ import {
     SlidersHorizontal,
     Cog,
     CalendarDays,
-    Hand
+    Hand,
+    Users
 } from 'lucide-react';
 
 const SubSidebar = ({ menu, onClose }) => {
   const location = useLocation();
 
   const menuData = {
+    '/employees': [
+        { label: 'Employees List', path: '/employees', icon: Users },
+    ],
     '/performance-appraisals': [
         { label: 'Appraisal Cycles', path: '/performance-appraisals/cycles', icon: Calendar },
         { label: 'KRA/KPI Master', path: '/performance-appraisals/kra-master', icon: FileText },
