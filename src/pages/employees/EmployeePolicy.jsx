@@ -7,12 +7,18 @@ const punchTypes = ['No punch', 'Single punch', 'Odd punch', 'Even punch', 'Firs
 const yesNoOptions = ['Yes', 'No'];
 const overtimeOptions = ['Yes', 'No', 'On Approval'];
 const departments = ['Engineering', 'Design', 'Product', 'Sales', 'Marketing', 'Production'];
+const designations = ['Software Engineer', 'Sr. Engineer', 'Team Lead', 'Manager', 'Designer', 'Product Manager', 'TIG WELDER'];
+const locations = ['Mumbai', 'Bengaluru', 'Delhi', 'Chennai', 'Hyderabad'];
+const categories = ['Full-time', 'Part-time', 'Intern', 'Contract'];
 
 const generatePolicyData = (count) => Array.from({ length: count }, (_, i) => ({
     id: `PR${101 + i}`,
     name: faker.helpers.arrayElement(indianNames),
     avatar: `https://i.pravatar.cc/150?u=PR${101 + i}`,
     department: faker.helpers.arrayElement(departments),
+    designation: faker.helpers.arrayElement(designations),
+    location: faker.helpers.arrayElement(locations),
+    category: faker.helpers.arrayElement(categories),
     punchType: faker.helpers.arrayElement(punchTypes),
     overtime: faker.helpers.arrayElement(overtimeOptions),
     late: faker.helpers.arrayElement(yesNoOptions),
@@ -21,13 +27,18 @@ const generatePolicyData = (count) => Array.from({ length: count }, (_, i) => ({
 }));
 
 const EmployeePolicy = () => {
-    const [policies, setPolicies] = useState(generatePolicyData(15));
+    const [policies, setPolicies] = useState(generatePolicyData(25));
     const [showEditModal, setShowEditModal] = useState(false);
     const [selectedEmployee, setSelectedEmployee] = useState(null);
 
     // State for Group Edit Modal
     const [showGroupEditModal, setShowGroupEditModal] = useState(false);
-    const [groupFilters, setGroupFilters] = useState({ department: 'All' });
+    const [groupFilters, setGroupFilters] = useState({ 
+        department: 'All', 
+        designation: 'All', 
+        location: 'All', 
+        category: 'All' 
+    });
     const [groupSearchTerm, setGroupSearchTerm] = useState('');
     const [groupSelectedEmployees, setGroupSelectedEmployees] = useState(new Set());
     const [groupPolicyConfig, setGroupPolicyConfig] = useState({
@@ -56,8 +67,11 @@ const EmployeePolicy = () => {
     const filteredEmployeesForGroupEdit = useMemo(() => {
         return policies.filter(emp => {
             const matchesDept = groupFilters.department === 'All' || emp.department === groupFilters.department;
+            const matchesDesignation = groupFilters.designation === 'All' || emp.designation === groupFilters.designation;
+            const matchesLocation = groupFilters.location === 'All' || emp.location === groupFilters.location;
+            const matchesCategory = groupFilters.category === 'All' || emp.category === groupFilters.category;
             const matchesSearch = emp.name.toLowerCase().includes(groupSearchTerm.toLowerCase());
-            return matchesDept && matchesSearch;
+            return matchesDept && matchesDesignation && matchesLocation && matchesCategory && matchesSearch;
         });
     }, [policies, groupFilters, groupSearchTerm]);
 
@@ -216,13 +230,25 @@ const EmployeePolicy = () => {
                             {/* Left: Employee Selection */}
                             <div className="p-4 border rounded-lg bg-base-200 space-y-4">
                                 <h4 className="font-semibold">1. Select Employees ({groupSelectedEmployees.size} selected)</h4>
-                                <div className="flex gap-2">
-                                    <select className="select select-bordered select-sm flex-1" value={groupFilters.department} onChange={e => setGroupFilters({...groupFilters, department: e.target.value})}>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                    <select className="select select-bordered select-sm" value={groupFilters.department} onChange={e => setGroupFilters({...groupFilters, department: e.target.value})}>
                                         <option value="All">All Departments</option>
                                         {departments.map(d => <option key={d}>{d}</option>)}
                                     </select>
-                                    <input type="text" placeholder="Search by name..." className="input input-bordered input-sm flex-1" value={groupSearchTerm} onChange={e => setGroupSearchTerm(e.target.value)} />
+                                    <select className="select select-bordered select-sm" value={groupFilters.designation} onChange={e => setGroupFilters({...groupFilters, designation: e.target.value})}>
+                                        <option value="All">All Designations</option>
+                                        {designations.map(d => <option key={d}>{d}</option>)}
+                                    </select>
+                                    <select className="select select-bordered select-sm" value={groupFilters.location} onChange={e => setGroupFilters({...groupFilters, location: e.target.value})}>
+                                        <option value="All">All Locations</option>
+                                        {locations.map(l => <option key={l}>{l}</option>)}
+                                    </select>
+                                    <select className="select select-bordered select-sm" value={groupFilters.category} onChange={e => setGroupFilters({...groupFilters, category: e.target.value})}>
+                                        <option value="All">All Categories</option>
+                                        {categories.map(c => <option key={c}>{c}</option>)}
+                                    </select>
                                 </div>
+                                <input type="text" placeholder="Search by name..." className="input input-bordered input-sm w-full" value={groupSearchTerm} onChange={e => setGroupSearchTerm(e.target.value)} />
                                 <div className="form-control">
                                     <label className="label cursor-pointer"><span className="label-text">Select All ({filteredEmployeesForGroupEdit.length})</span><input type="checkbox" className="checkbox" onChange={handleGroupSelectAll} /></label>
                                 </div>
