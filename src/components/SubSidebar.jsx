@@ -41,6 +41,7 @@ const SubSidebar = ({ menu, onClose }) => {
   const menuData = {
     '/employees': [
         { label: 'Employees List', path: '/employees', icon: Users },
+        { label: 'Employee Policy', path: '/employees/policy', icon: FileCog },
     ],
     '/performance-appraisals': [
         { label: 'Appraisal Cycles', path: '/performance-appraisals/cycles', icon: Calendar },
@@ -95,6 +96,7 @@ const SubSidebar = ({ menu, onClose }) => {
   if (!menu || !submenuItems) return null;
 
   const isActiveRoute = (path) => {
+    if (path === '/employees') return location.pathname === '/employees' || location.pathname === '/employees/';
     return location.pathname === path || location.pathname.startsWith(path + '/');
   };
 
