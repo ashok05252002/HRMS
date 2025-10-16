@@ -1,68 +1,52 @@
 import React, { useState } from 'react';
-import { Send, CheckCircle, UploadCloud } from 'lucide-react';
+import { Send, Globe, CheckCircle } from 'lucide-react';
 
 const Step5_Publish = () => {
-    const [showConfirmModal, setShowConfirmModal] = useState(null); // 'publish' or 'email'
-    const [logs, setLogs] = useState([]);
+    const [action, setAction] = useState(null);
 
-    const handleAction = (action) => {
-        setShowConfirmModal(action);
+    const handlePublish = () => {
+        setAction('publish');
+        setTimeout(() => setAction('published'), 2000);
     };
 
-    const confirmAction = () => {
-        const actionType = showConfirmModal;
-        setShowConfirmModal(null);
-        // Simulate action
-        const newLog = {
-            type: actionType,
-            message: `${actionType === 'publish' ? 'Published to' : 'Emailed'} 5 employees.`,
-            timestamp: new Date().toLocaleString()
-        };
-        setLogs(prev => [newLog, ...prev]);
+    const handleEmail = () => {
+        setAction('email');
+        setTimeout(() => setAction('emailed'), 2000);
     };
+
+    if (action === 'published' || action === 'emailed') {
+        return (
+            <div className="text-center p-8">
+                <CheckCircle size={48} className="text-success mx-auto mb-4" />
+                <h3 className="text-xl font-bold">Action Successful!</h3>
+                <p>Form 16s have been successfully {action}.</p>
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-6">
-            <h3 className="font-semibold text-lg">Step 5: Publish or Email Form 16</h3>
-            <p className="text-sm text-base-content/70">Distribute the signed Form 16 documents to your employees.</p>
-            <div className="flex justify-center gap-6 p-6 bg-base-200 rounded-lg">
-                <button className="btn btn-primary" onClick={() => handleAction('publish')}>
-                    <UploadCloud size={20} className="mr-2" />
-                    Publish to Employee Portal
-                </button>
-                <button className="btn btn-secondary" onClick={() => handleAction('email')}>
-                    <Send size={20} className="mr-2" />
-                    Email to Employees
-                </button>
+            <h3 className="text-lg font-semibold">Step 5: Publish or Email Form 16</h3>
+            <p className="text-sm text-base-content/70">The documents are now digitally signed and ready for distribution to employees.</p>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="card bg-base-200 text-center p-6">
+                    <Globe size={40} className="mx-auto text-primary mb-4" />
+                    <h4 className="font-semibold text-lg mb-2">Publish to Employee Portal</h4>
+                    <p className="text-sm mb-4">Make the Form 16 available for download in each employee's self-service portal.</p>
+                    <button onClick={handlePublish} className={`btn btn-primary ${action === 'publish' ? 'loading' : ''}`}>
+                        {action === 'publish' ? 'Publishing...' : 'Publish Now'}
+                    </button>
+                </div>
+                <div className="card bg-base-200 text-center p-6">
+                    <Send size={40} className="mx-auto text-secondary mb-4" />
+                    <h4 className="font-semibold text-lg mb-2">Email to Employees</h4>
+                    <p className="text-sm mb-4">Send the password-protected Form 16 as an attachment to each employee's registered email address.</p>
+                    <button onClick={handleEmail} className={`btn btn-secondary ${action === 'email' ? 'loading' : ''}`}>
+                        {action === 'email' ? 'Sending Emails...' : 'Send Emails Now'}
+                    </button>
+                </div>
             </div>
-
-            {logs.length > 0 && (
-                <div className="space-y-2">
-                    <h4 className="font-semibold">Activity Log:</h4>
-                    {logs.map((log, index) => (
-                        <div key={index} className="alert alert-success text-sm">
-                            <CheckCircle size={20} />
-                            <div>
-                                <p>{log.message}</p>
-                                <p className="text-xs">{log.timestamp}</p>
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            )}
-
-            {showConfirmModal && (
-                <div className="modal modal-open">
-                    <div className="modal-box">
-                        <h3 className="font-bold text-lg">Confirm Action</h3>
-                        <p className="py-4">Are you sure you want to {showConfirmModal === 'publish' ? 'publish Form 16 to all employee portals' : 'email Form 16 to all employees'}? This action cannot be undone.</p>
-                        <div className="modal-action">
-                            <button className="btn btn-ghost" onClick={() => setShowConfirmModal(null)}>Cancel</button>
-                            <button className="btn btn-primary" onClick={confirmAction}>Confirm & {showConfirmModal}</button>
-                        </div>
-                    </div>
-                </div>
-            )}
         </div>
     );
 };

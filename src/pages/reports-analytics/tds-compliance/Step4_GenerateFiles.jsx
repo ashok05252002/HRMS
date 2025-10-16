@@ -1,30 +1,40 @@
 import React from 'react';
-import { Download, FileText } from 'lucide-react';
+import { Download, FileSpreadsheet, FileText } from 'lucide-react';
 
 const Step4_GenerateFiles = () => {
-    return (
-        <div className="space-y-8 text-center p-4">
-            <div className="p-6 border rounded-lg bg-base-200">
-                <h3 className="font-semibold text-lg mb-4">Step 4: Generate CSI File</h3>
-                <p className="text-sm text-base-content/70 mb-4">Generate the Challan Status Inquiry (CSI) file for validation.</p>
-                <button className="btn btn-secondary"><FileText size={16} className="mr-2"/> Generate CSI File</button>
-                <div className="mt-4 text-left hidden">
-                    <p>Generated File:</p>
-                    <a href="#" className="link link-primary flex items-center gap-2"><Download size={16}/> challan_q2.csi</a>
-                </div>
-            </div>
+  const generatedFiles = [
+    { name: 'Form24Q_Q1.fvu', type: 'FVU File', size: '1.2 MB' },
+    { name: 'Annexure_I.xlsx', type: 'Annexure I', size: '850 KB' },
+    { name: 'Annexure_II.xlsx', type: 'Annexure II', size: '420 KB' },
+    { name: 'Form27A.pdf', type: 'Form 27A', size: '150 KB' },
+  ];
 
-            <div className="p-6 border rounded-lg bg-base-200">
-                <h3 className="font-semibold text-lg mb-4">Step 5: Generate FVU File</h3>
-                <p className="text-sm text-base-content/70 mb-4">Once challans are allocated and validated, generate the final File Validation Utility (FVU) file for submission.</p>
-                <button className="btn btn-primary"><FileText size={16} className="mr-2"/> Generate FVU File</button>
-                 <div className="mt-4 text-left hidden">
-                    <p>Generated File:</p>
-                    <a href="#" className="link link-primary flex items-center gap-2"><Download size={16}/> form24q_q2.fvu</a>
+  return (
+    <div className="space-y-6">
+      <h3 className="text-lg font-semibold">Step 4: Download Generated Files</h3>
+      <p className="text-sm text-base-content/70">Your e-TDS files have been generated successfully. Download the files below for submission.</p>
+
+      <div className="space-y-4">
+        {generatedFiles.map(file => (
+          <div key={file.name} className="card card-side bg-base-200 shadow-md">
+            <div className="card-body flex-row items-center justify-between">
+              <div className="flex items-center gap-4">
+                {file.type.includes('FVU') ? <FileSpreadsheet size={32} className="text-primary" /> : <FileText size={32} className="text-primary" />}
+                <div>
+                  <h4 className="font-semibold">{file.name}</h4>
+                  <p className="text-sm text-base-content/70">{file.type} - {file.size}</p>
                 </div>
+              </div>
+              <button className="btn btn-primary">
+                <Download size={16} />
+                Download
+              </button>
             </div>
-        </div>
-    );
+          </div>
+        ))}
+      </div>
+    </div>
+  );
 };
 
 export default Step4_GenerateFiles;

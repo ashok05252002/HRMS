@@ -1,6 +1,6 @@
 import React from 'react';
 import { Routes, Route, Link, useLocation } from 'react-router-dom';
-import { SlidersHorizontal, Shield, Bell, Calendar, Star, Users, DollarSign, MessageSquare, History, CalendarDays } from 'lucide-react';
+import { SlidersHorizontal, Shield, Bell, Calendar, Star, Users, DollarSign, MessageSquare, History, CalendarDays, FileText } from 'lucide-react';
 
 import AppraisalPeriodSetup from './settings/AppraisalPeriodSetup';
 import ScoringModelsSetup from './settings/ScoringModelsSetup';
@@ -11,6 +11,7 @@ import NotificationRules from './settings/NotificationRules';
 import AccessControl from './settings/AccessControl';
 import AuditLogging from './settings/AuditLogging';
 import ShiftRoaster from './settings/ShiftRoaster';
+import PayslipGenerator from './settings/PayslipGenerator';
 
 const Settings = () => {
   const location = useLocation();
@@ -28,6 +29,7 @@ const Settings = () => {
         <Route path="/access-control" element={<AccessControl />} />
         <Route path="/audit-logging" element={<AuditLogging />} />
         <Route path="/shift-roaster" element={<ShiftRoaster />} />
+        <Route path="/payslip-generator" element={<PayslipGenerator />} />
       </Routes>
     );
   }
@@ -38,6 +40,7 @@ const Settings = () => {
     { title: 'Reviewer Hierarchy', icon: Users, desc: 'Define review sequences and workflows.', path: '/settings/reviewer-hierarchy' },
     { title: 'Increment Rules', icon: DollarSign, desc: 'Automate increment calculations based on scores.', path: '/settings/increment-rules' },
     { title: 'Shift Roaster', icon: CalendarDays, desc: 'Create and manage employee shift roasters.', path: '/settings/shift-roaster' },
+    { title: 'Payslip Generator', icon: FileText, desc: 'Generate and manage employee payslips.', path: '/settings/payslip-generator' },
     { title: 'Feedback Forms', icon: MessageSquare, desc: 'Build custom evaluation and feedback forms.', path: '/settings/feedback-forms' },
     { title: 'Notification Rules', icon: Bell, desc: 'Configure automated alerts for all modules.', path: '/settings/notification-rules' },
     { title: 'Access Control (RBAC)', icon: Shield, desc: 'Manage user roles and permissions.', path: '/settings/access-control' },

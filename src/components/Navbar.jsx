@@ -26,7 +26,7 @@ const Navbar = ({ onMenuClick, theme, toggleTheme }) => {
           <Maximize2 size={20} />
         </button>
         <div className="font-semibold text-lg">
-          Pro-People
+          HRMS
         </div>
       </div>
       

@@ -1,145 +1,113 @@
 import React, { useState, useMemo } from 'react';
+import { Edit, Save, Plus, Filter, Search } from 'lucide-react';
 import { faker } from '@faker-js/faker';
-import { Edit, X, Users, Filter, Search } from 'lucide-react';
 
-const indianNames = ['Aarav Sharma', 'Vivaan Singh', 'Aditya Kumar', 'Vihaan Patel', 'Arjun Reddy', 'Sai Gupta', 'Reyansh Mishra', 'Krishna Verma', 'Ishaan Yadav', 'Rohan Mehra', 'Priya Patel', 'Saanvi Sharma', 'Ananya Singh', 'Aadhya Gupta', 'Diya Kumar', 'Kaif Shekh'];
-const punchTypes = ['No punch', 'Single punch', 'Odd punch', 'Even punch', 'First in and last out'];
-const yesNoOptions = ['Yes', 'No'];
-const overtimeOptions = ['Yes', 'No', 'On Approval'];
-const departments = ['Engineering', 'Design', 'Product', 'Sales', 'Marketing', 'Production'];
-const designations = ['Software Engineer', 'Sr. Engineer', 'Team Lead', 'Manager', 'Designer', 'Product Manager', 'TIG WELDER'];
-const locations = ['Mumbai', 'Bengaluru', 'Delhi', 'Chennai', 'Hyderabad'];
-const categories = ['Full-time', 'Part-time', 'Intern', 'Contract'];
+const generatePolicyData = (count) => {
+    const data = [];
+    const departments = ['Engineering', 'Design', 'Marketing', 'Sales', 'HR'];
+    const designations = ['Software Engineer', 'Sr. Designer', 'Marketing Lead', 'Sales Executive', 'HR Manager'];
+    const locations = ['Mumbai', 'Bangalore', 'Chennai', 'Delhi', 'Pune'];
+    const categories = ['Full-Time', 'Part-Time', 'Intern'];
 
-const generatePolicyData = (count) => Array.from({ length: count }, (_, i) => ({
-    id: `PR${101 + i}`,
-    name: faker.helpers.arrayElement(indianNames),
-    avatar: `https://i.pravatar.cc/150?u=PR${101 + i}`,
-    department: faker.helpers.arrayElement(departments),
-    designation: faker.helpers.arrayElement(designations),
-    location: faker.helpers.arrayElement(locations),
-    category: faker.helpers.arrayElement(categories),
-    punchType: faker.helpers.arrayElement(punchTypes),
-    overtime: faker.helpers.arrayElement(overtimeOptions),
-    late: faker.helpers.arrayElement(yesNoOptions),
-    workSpan: faker.helpers.arrayElement([8, 9, 10]),
-    autoShift: faker.helpers.arrayElement(yesNoOptions),
-}));
+    for (let i = 0; i < count; i++) {
+        const firstName = faker.person.firstName();
+        const lastName = faker.person.lastName();
+        data.push({
+            id: `PR${101 + i}`,
+            name: `${firstName} ${lastName}`,
+            department: faker.helpers.arrayElement(departments),
+            designation: faker.helpers.arrayElement(designations),
+            location: faker.helpers.arrayElement(locations),
+            category: faker.helpers.arrayElement(categories),
+            punchType: faker.helpers.arrayElement(['No Punch', 'Single Punch', 'Odd Punch', 'Even Punch', 'First In Last Out']),
+            overtime: faker.helpers.arrayElement(['Yes', 'No', 'On Approval']),
+            late: faker.helpers.arrayElement(['Yes', 'No']),
+            workSpan: faker.number.int({ min: 6, max: 10 }),
+            autoShift: faker.helpers.arrayElement(['Yes', 'No']),
+        });
+    }
+    return data;
+};
 
 const EmployeePolicy = () => {
-    const [policies, setPolicies] = useState(generatePolicyData(25));
-    const [showEditModal, setShowEditModal] = useState(false);
-    const [selectedEmployee, setSelectedEmployee] = useState(null);
-
-    // State for Group Edit Modal
-    const [showGroupEditModal, setShowGroupEditModal] = useState(false);
-    const [groupFilters, setGroupFilters] = useState({ 
-        department: 'All', 
-        designation: 'All', 
-        location: 'All', 
-        category: 'All' 
-    });
-    const [groupSearchTerm, setGroupSearchTerm] = useState('');
-    const [groupSelectedEmployees, setGroupSelectedEmployees] = useState(new Set());
-    const [groupPolicyConfig, setGroupPolicyConfig] = useState({
-        punchType: '', overtime: '', late: '', workSpan: '', autoShift: ''
-    });
-
-    const handleEditClick = (employee) => {
-        setSelectedEmployee({ ...employee });
-        setShowEditModal(true);
-    };
-
-    const handleSave = () => {
-        setPolicies(prevPolicies => 
-            prevPolicies.map(p => p.id === selectedEmployee.id ? selectedEmployee : p)
-        );
-        setShowEditModal(false);
-        setSelectedEmployee(null);
-    };
-
-    const handleModalChange = (e) => {
-        const { name, value } = e.target;
-        setSelectedEmployee(prev => ({ ...prev, [name]: value }));
-    };
-
-    // --- Group Edit Logic ---
-    const filteredEmployeesForGroupEdit = useMemo(() => {
-        return policies.filter(emp => {
-            const matchesDept = groupFilters.department === 'All' || emp.department === groupFilters.department;
-            const matchesDesignation = groupFilters.designation === 'All' || emp.designation === groupFilters.designation;
-            const matchesLocation = groupFilters.location === 'All' || emp.location === groupFilters.location;
-            const matchesCategory = groupFilters.category === 'All' || emp.category === groupFilters.category;
-            const matchesSearch = emp.name.toLowerCase().includes(groupSearchTerm.toLowerCase());
-            return matchesDept && matchesDesignation && matchesLocation && matchesCategory && matchesSearch;
-        });
-    }, [policies, groupFilters, groupSearchTerm]);
-
-    const handleGroupEmployeeSelect = (id) => {
-        setGroupSelectedEmployees(prev => {
-            const newSet = new Set(prev);
-            newSet.has(id) ? newSet.delete(id) : newSet.add(id);
-            return newSet;
-        });
-    };
+    const [policies, setPolicies] = useState(() => generatePolicyData(20));
+    const [editingId, setEditingId] = useState(null);
+    const [editData, setEditData] = useState({});
+    const [showGroupEdit, setShowGroupEdit] = useState(false);
     
-    const handleGroupSelectAll = (e) => {
-        if (e.target.checked) {
-            setGroupSelectedEmployees(new Set(filteredEmployeesForGroupEdit.map(emp => emp.id)));
-        } else {
-            setGroupSelectedEmployees(new Set());
-        }
+    // State for Group Edit Modal
+    const [groupFilters, setGroupFilters] = useState({
+        department: '',
+        designation: '',
+        location: '',
+        category: '',
+    });
+    const [selectedEmployees, setSelectedEmployees] = useState([]);
+    const [groupPolicy, setGroupPolicy] = useState({
+        punchType: 'No Punch',
+        overtime: 'No',
+        late: 'No',
+        workSpan: 8,
+        autoShift: 'No',
+    });
+
+    const handleEdit = (policy) => {
+        setEditingId(policy.id);
+        setEditData(policy);
     };
 
-    const handleGroupPolicyChange = (e) => {
-        const { name, value } = e.target;
-        setGroupPolicyConfig(prev => ({ ...prev, [name]: value }));
+    const handleSave = (id) => {
+        setPolicies(policies.map(p => p.id === id ? editData : p));
+        setEditingId(null);
     };
 
-    const handleApplyGroupChanges = () => {
-        if (groupSelectedEmployees.size === 0) {
-            alert('Please select at least one employee.');
-            return;
-        }
+    const handleGroupEditSave = () => {
+        setPolicies(policies.map(p => {
+            if (selectedEmployees.includes(p.id)) {
+                return { ...p, ...groupPolicy };
+            }
+            return p;
+        }));
+        setShowGroupEdit(false);
+        setSelectedEmployees([]);
+    };
 
-        setPolicies(prevPolicies => 
-            prevPolicies.map(p => {
-                if (groupSelectedEmployees.has(p.id)) {
-                    let updatedPolicy = { ...p };
-                    for (const key in groupPolicyConfig) {
-                        if (groupPolicyConfig[key] !== '') {
-                            updatedPolicy[key] = groupPolicyConfig[key];
-                        }
-                    }
-                    return updatedPolicy;
-                }
-                return p;
-            })
+    const filteredEmployeesForGroupEdit = useMemo(() => {
+        return policies.filter(p => 
+            (!groupFilters.department || p.department === groupFilters.department) &&
+            (!groupFilters.designation || p.designation === groupFilters.designation) &&
+            (!groupFilters.location || p.location === groupFilters.location) &&
+            (!groupFilters.category || p.category === groupFilters.category)
         );
-        setShowGroupEditModal(false);
+    }, [policies, groupFilters]);
+
+    const handleEmployeeSelection = (id) => {
+        setSelectedEmployees(prev => 
+            prev.includes(id) ? prev.filter(empId => empId !== id) : [...prev, id]
+        );
     };
-    // --- End Group Edit Logic ---
 
     return (
         <div className="space-y-6">
             <div className="flex items-center justify-between">
                 <h1 className="text-2xl font-bold">Employee Policy</h1>
-                <button onClick={() => setShowGroupEditModal(true)} className="btn btn-secondary">
-                    <Users size={16} className="mr-2"/> Group Edit
+                <button onClick={() => setShowGroupEdit(true)} className="btn btn-secondary">
+                    <Filter size={16} />
+                    Group Edit
                 </button>
             </div>
-            <div className="card bg-base-100 shadow-xl">
+
+            <div className="card bg-base-100 shadow-lg border border-base-300">
                 <div className="card-body">
-                    <h2 className="card-title">Policy Settings per Employee</h2>
                     <div className="overflow-x-auto">
-                        <table className="table table-zebra">
+                        <table className="table table-zebra w-full">
                             <thead>
                                 <tr>
                                     <th>Employee</th>
                                     <th>Punch Type</th>
-                                    <th>Overtime Applicable</th>
+                                    <th>Overtime</th>
                                     <th>Late</th>
-                                    <th>Work Span</th>
+                                    <th>Work Span (hrs)</th>
                                     <th>Auto Shift</th>
                                     <th>Actions</th>
                                 </tr>
@@ -147,28 +115,44 @@ const EmployeePolicy = () => {
                             <tbody>
                                 {policies.map(policy => (
                                     <tr key={policy.id}>
+                                        <td>{policy.name}</td>
+                                        <td>{editingId === policy.id ? (
+                                            <select className="select select-bordered select-sm" value={editData.punchType} onChange={e => setEditData({...editData, punchType: e.target.value})}>
+                                                <option>No Punch</option>
+                                                <option>Single Punch</option>
+                                                <option>Odd Punch</option>
+                                                <option>Even Punch</option>
+                                                <option>First In Last Out</option>
+                                            </select>
+                                        ) : policy.punchType}</td>
+                                        <td>{editingId === policy.id ? (
+                                            <select className="select select-bordered select-sm" value={editData.overtime} onChange={e => setEditData({...editData, overtime: e.target.value})}>
+                                                <option>Yes</option>
+                                                <option>No</option>
+                                                <option>On Approval</option>
+                                            </select>
+                                        ) : policy.overtime}</td>
+                                        <td>{editingId === policy.id ? (
+                                            <select className="select select-bordered select-sm" value={editData.late} onChange={e => setEditData({...editData, late: e.target.value})}>
+                                                <option>Yes</option>
+                                                <option>No</option>
+                                            </select>
+                                        ) : policy.late}</td>
+                                        <td>{editingId === policy.id ? (
+                                            <input type="number" className="input input-bordered input-sm w-20" value={editData.workSpan} onChange={e => setEditData({...editData, workSpan: e.target.value})} />
+                                        ) : policy.workSpan}</td>
+                                        <td>{editingId === policy.id ? (
+                                            <select className="select select-bordered select-sm" value={editData.autoShift} onChange={e => setEditData({...editData, autoShift: e.target.value})}>
+                                                <option>Yes</option>
+                                                <option>No</option>
+                                            </select>
+                                        ) : policy.autoShift}</td>
                                         <td>
-                                            <div className="flex items-center gap-3">
-                                                <div className="avatar">
-                                                    <div className="mask mask-squircle w-10 h-10">
-                                                        <img src={policy.avatar} alt={policy.name} />
-                                                    </div>
-                                                </div>
-                                                <div>
-                                                    <div className="font-bold">{policy.name}</div>
-                                                    <div className="text-sm opacity-50">{policy.id}</div>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td><span className="badge badge-ghost badge-sm">{policy.punchType}</span></td>
-                                        <td><span className={`badge badge-sm ${policy.overtime === 'Yes' ? 'badge-success' : policy.overtime === 'No' ? 'badge-error' : 'badge-warning'}`}>{policy.overtime}</span></td>
-                                        <td><span className={`badge badge-sm ${policy.late === 'Yes' ? 'badge-success' : 'badge-error'}`}>{policy.late}</span></td>
-                                        <td>{policy.workSpan} hours</td>
-                                        <td><span className={`badge badge-sm ${policy.autoShift === 'Yes' ? 'badge-success' : 'badge-error'}`}>{policy.autoShift}</span></td>
-                                        <td>
-                                            <button onClick={() => handleEditClick(policy)} className="btn btn-ghost btn-sm">
-                                                <Edit size={16} />
-                                            </button>
+                                            {editingId === policy.id ? (
+                                                <button onClick={() => handleSave(policy.id)} className="btn btn-sm btn-success"><Save size={16} /></button>
+                                            ) : (
+                                                <button onClick={() => handleEdit(policy)} className="btn btn-sm btn-ghost"><Edit size={16} /></button>
+                                            )}
                                         </td>
                                     </tr>
                                 ))}
@@ -178,119 +162,98 @@ const EmployeePolicy = () => {
                 </div>
             </div>
 
-            {showEditModal && selectedEmployee && (
+            {/* Group Edit Modal */}
+            {showGroupEdit && (
                 <div className="modal modal-open">
-                    <div className="modal-box">
-                        <button onClick={() => setShowEditModal(false)} className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"><X /></button>
-                        <h3 className="font-bold text-lg">Edit Policy for {selectedEmployee.name}</h3>
-                        <div className="py-4 space-y-4">
-                            <div className="form-control">
-                                <label className="label"><span className="label-text">Punch Type</span></label>
-                                <select name="punchType" value={selectedEmployee.punchType} onChange={handleModalChange} className="select select-bordered">
-                                    {punchTypes.map(type => <option key={type} value={type}>{type}</option>)}
-                                </select>
-                            </div>
-                            <div className="form-control">
-                                <label className="label"><span className="label-text">Overtime Applicable</span></label>
-                                <select name="overtime" value={selectedEmployee.overtime} onChange={handleModalChange} className="select select-bordered">
-                                    {overtimeOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                                </select>
-                            </div>
-                            <div className="form-control">
-                                <label className="label"><span className="label-text">Late</span></label>
-                                <select name="late" value={selectedEmployee.late} onChange={handleModalChange} className="select select-bordered">
-                                    {yesNoOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                                </select>
-                            </div>
-                            <div className="form-control">
-                                <label className="label"><span className="label-text">Work Span (hours)</span></label>
-                                <input type="number" name="workSpan" value={selectedEmployee.workSpan} onChange={handleModalChange} className="input input-bordered" />
-                            </div>
-                            <div className="form-control">
-                                <label className="label"><span className="label-text">Auto Shift</span></label>
-                                <select name="autoShift" value={selectedEmployee.autoShift} onChange={handleModalChange} className="select select-bordered">
-                                    {yesNoOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}
-                                </select>
-                            </div>
-                        </div>
-                        <div className="modal-action">
-                            <button onClick={() => setShowEditModal(false)} className="btn btn-ghost">Cancel</button>
-                            <button onClick={handleSave} className="btn btn-primary">Save Changes</button>
-                        </div>
-                    </div>
-                </div>
-            )}
-            
-            {showGroupEditModal && (
-                <div className="modal modal-open">
-                    <div className="modal-box w-11/12 max-w-6xl">
-                        <button onClick={() => setShowGroupEditModal(false)} className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"><X /></button>
-                        <h3 className="font-bold text-lg">Group Edit Employee Policies</h3>
+                    <div className="modal-box w-11/12 max-w-5xl">
+                        <h3 className="font-bold text-lg">Group Policy Edit</h3>
+                        
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
-                            {/* Left: Employee Selection */}
-                            <div className="p-4 border rounded-lg bg-base-200 space-y-4">
-                                <h4 className="font-semibold">1. Select Employees ({groupSelectedEmployees.size} selected)</h4>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                                    <select className="select select-bordered select-sm" value={groupFilters.department} onChange={e => setGroupFilters({...groupFilters, department: e.target.value})}>
-                                        <option value="All">All Departments</option>
-                                        {departments.map(d => <option key={d}>{d}</option>)}
-                                    </select>
-                                    <select className="select select-bordered select-sm" value={groupFilters.designation} onChange={e => setGroupFilters({...groupFilters, designation: e.target.value})}>
-                                        <option value="All">All Designations</option>
-                                        {designations.map(d => <option key={d}>{d}</option>)}
-                                    </select>
-                                    <select className="select select-bordered select-sm" value={groupFilters.location} onChange={e => setGroupFilters({...groupFilters, location: e.target.value})}>
-                                        <option value="All">All Locations</option>
-                                        {locations.map(l => <option key={l}>{l}</option>)}
-                                    </select>
-                                    <select className="select select-bordered select-sm" value={groupFilters.category} onChange={e => setGroupFilters({...groupFilters, category: e.target.value})}>
-                                        <option value="All">All Categories</option>
-                                        {categories.map(c => <option key={c}>{c}</option>)}
-                                    </select>
+                            {/* Left Panel: Filters & Employee List */}
+                            <div className="space-y-4">
+                                <h4 className="font-semibold">1. Select Employees</h4>
+                                <div className="p-4 border rounded-lg bg-base-200 space-y-4">
+                                    <p className="text-sm font-medium">Filter by:</p>
+                                    <div className="grid grid-cols-2 gap-4">
+                                        <select className="select select-bordered select-sm" value={groupFilters.department} onChange={e => setGroupFilters({...groupFilters, department: e.target.value})}>
+                                            <option value="">All Departments</option>
+                                            {[...new Set(policies.map(p => p.department))].map(d => <option key={d}>{d}</option>)}
+                                        </select>
+                                        <select className="select select-bordered select-sm" value={groupFilters.location} onChange={e => setGroupFilters({...groupFilters, location: e.target.value})}>
+                                            <option value="">All Locations</option>
+                                            {[...new Set(policies.map(p => p.location))].map(l => <option key={l}>{l}</option>)}
+                                        </select>
+                                        <select className="select select-bordered select-sm" value={groupFilters.designation} onChange={e => setGroupFilters({...groupFilters, designation: e.target.value})}>
+                                            <option value="">All Designations</option>
+                                            {[...new Set(policies.map(p => p.designation))].map(d => <option key={d}>{d}</option>)}
+                                        </select>
+                                        <select className="select select-bordered select-sm" value={groupFilters.category} onChange={e => setGroupFilters({...groupFilters, category: e.target.value})}>
+                                            <option value="">All Categories</option>
+                                            {[...new Set(policies.map(p => p.category))].map(c => <option key={c}>{c}</option>)}
+                                        </select>
+                                    </div>
                                 </div>
-                                <input type="text" placeholder="Search by name..." className="input input-bordered input-sm w-full" value={groupSearchTerm} onChange={e => setGroupSearchTerm(e.target.value)} />
-                                <div className="form-control">
-                                    <label className="label cursor-pointer"><span className="label-text">Select All ({filteredEmployeesForGroupEdit.length})</span><input type="checkbox" className="checkbox" onChange={handleGroupSelectAll} /></label>
-                                </div>
-                                <div className="h-96 overflow-y-auto space-y-2 pr-2">
+                                <div className="h-64 overflow-y-auto border rounded-lg p-2">
                                     {filteredEmployeesForGroupEdit.map(emp => (
-                                        <div key={emp.id} className="p-2 border rounded-lg bg-base-100 flex items-center gap-3">
-                                            <input type="checkbox" className="checkbox" checked={groupSelectedEmployees.has(emp.id)} onChange={() => handleGroupEmployeeSelect(emp.id)} />
-                                            <div className="font-medium">{emp.name}</div>
-                                            <div className="text-sm opacity-50">{emp.department}</div>
+                                        <div key={emp.id} className="form-control">
+                                            <label className="label cursor-pointer">
+                                                <span className="label-text">{emp.name}</span>
+                                                <input type="checkbox" className="checkbox" checked={selectedEmployees.includes(emp.id)} onChange={() => handleEmployeeSelection(emp.id)} />
+                                            </label>
                                         </div>
                                     ))}
                                 </div>
                             </div>
-                            {/* Right: Policy Configuration */}
-                            <div className="p-4 border rounded-lg bg-base-200 space-y-4">
-                                <h4 className="font-semibold">2. Apply Policies</h4>
-                                <p className="text-xs text-base-content/70">Only filled fields will be applied to the selected employees.</p>
-                                <div className="form-control">
-                                    <label className="label"><span className="label-text">Punch Type</span></label>
-                                    <select name="punchType" value={groupPolicyConfig.punchType} onChange={handleGroupPolicyChange} className="select select-bordered"><option value="">Don't Change</option>{punchTypes.map(type => <option key={type} value={type}>{type}</option>)}</select>
-                                </div>
-                                <div className="form-control">
-                                    <label className="label"><span className="label-text">Overtime Applicable</span></label>
-                                    <select name="overtime" value={groupPolicyConfig.overtime} onChange={handleGroupPolicyChange} className="select select-bordered"><option value="">Don't Change</option>{overtimeOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}</select>
-                                </div>
-                                <div className="form-control">
-                                    <label className="label"><span className="label-text">Late</span></label>
-                                    <select name="late" value={groupPolicyConfig.late} onChange={handleGroupPolicyChange} className="select select-bordered"><option value="">Don't Change</option>{yesNoOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}</select>
-                                </div>
-                                <div className="form-control">
-                                    <label className="label"><span className="label-text">Work Span (hours)</span></label>
-                                    <input type="number" name="workSpan" placeholder="Leave blank to not change" value={groupPolicyConfig.workSpan} onChange={handleGroupPolicyChange} className="input input-bordered" />
-                                </div>
-                                <div className="form-control">
-                                    <label className="label"><span className="label-text">Auto Shift</span></label>
-                                    <select name="autoShift" value={groupPolicyConfig.autoShift} onChange={handleGroupPolicyChange} className="select select-bordered"><option value="">Don't Change</option>{yesNoOptions.map(opt => <option key={opt} value={opt}>{opt}</option>)}</select>
+                            
+                            {/* Right Panel: Policy Settings */}
+                            <div className="space-y-4">
+                                <h4 className="font-semibold">2. Assign New Policy</h4>
+                                <div className="p-4 border rounded-lg bg-base-200 space-y-4">
+                                    <div className="form-control">
+                                        <label className="label"><span className="label-text">Punch Type</span></label>
+                                        <select className="select select-bordered" value={groupPolicy.punchType} onChange={e => setGroupPolicy({...groupPolicy, punchType: e.target.value})}>
+                                            <option>No Punch</option>
+                                            <option>Single Punch</option>
+                                            <option>Odd Punch</option>
+                                            <option>Even Punch</option>
+                                            <option>First In Last Out</option>
+                                        </select>
+                                    </div>
+                                    <div className="form-control">
+                                        <label className="label"><span className="label-text">Overtime Applicable</span></label>
+                                        <select className="select select-bordered" value={groupPolicy.overtime} onChange={e => setGroupPolicy({...groupPolicy, overtime: e.target.value})}>
+                                            <option>Yes</option>
+                                            <option>No</option>
+                                            <option>On Approval</option>
+                                        </select>
+                                    </div>
+                                    <div className="form-control">
+                                        <label className="label"><span className="label-text">Late Applicable</span></label>
+                                        <select className="select select-bordered" value={groupPolicy.late} onChange={e => setGroupPolicy({...groupPolicy, late: e.target.value})}>
+                                            <option>Yes</option>
+                                            <option>No</option>
+                                        </select>
+                                    </div>
+                                    <div className="form-control">
+                                        <label className="label"><span className="label-text">Work Span (hours)</span></label>
+                                        <input type="number" className="input input-bordered" value={groupPolicy.workSpan} onChange={e => setGroupPolicy({...groupPolicy, workSpan: e.target.value})} />
+                                    </div>
+                                    <div className="form-control">
+                                        <label className="label"><span className="label-text">Auto Shift</span></label>
+                                        <select className="select select-bordered" value={groupPolicy.autoShift} onChange={e => setGroupPolicy({...groupPolicy, autoShift: e.target.value})}>
+                                            <option>Yes</option>
+                                            <option>No</option>
+                                        </select>
+                                    </div>
                                 </div>
                             </div>
                         </div>
+
                         <div className="modal-action">
-                            <button onClick={() => setShowGroupEditModal(false)} className="btn btn-ghost">Cancel</button>
-                            <button onClick={handleApplyGroupChanges} className="btn btn-primary">Apply to {groupSelectedEmployees.size} Employees</button>
+                            <button className="btn btn-ghost" onClick={() => setShowGroupEdit(false)}>Cancel</button>
+                            <button className="btn btn-primary" onClick={handleGroupEditSave} disabled={selectedEmployees.length === 0}>
+                                Apply to {selectedEmployees.length} Employees
+                            </button>
                         </div>
                     </div>
                 </div>

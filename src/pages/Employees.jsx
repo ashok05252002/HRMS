@@ -8,8 +8,8 @@ const Employees = () => {
   return (
     <Routes>
       <Route path="/" element={<EmployeeList />} />
-      <Route path="/policy" element={<EmployeePolicy />} />
       <Route path="/:employeeId" element={<EmployeeDetail />} />
+      <Route path="/policy" element={<EmployeePolicy />} />
     </Routes>
   );
 };

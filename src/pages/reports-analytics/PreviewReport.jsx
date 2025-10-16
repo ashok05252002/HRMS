@@ -1,122 +1,82 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import React, { useState, useMemo } from 'react';
+import { Link } from 'react-router-dom';
+import { Edit, Save, Download, FileText } from 'lucide-react';
 import { faker } from '@faker-js/faker';
-import { Edit, Save, Download, FileText, GripVertical } from 'lucide-react';
+import { DndProvider, useDrag, useDrop } from 'react-dnd';
+import { HTML5Backend } from 'react-dnd-html5-backend';
 
-const formatINRCurrency = (value) => {
-    const number = parseFloat(value);
-    if (isNaN(number)) return value;
-    return `INR ${number.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
-};
-
-const fieldToFakerMap = {
-    'Employee ID': () => `EMP${faker.string.numeric(4)}`,
-    'Full Name': () => faker.person.fullName(),
-    'Email': () => faker.internet.email(),
-    'Contact Number': () => faker.phone.number(),
-    'Gender': () => faker.person.sex(),
-    'Date of Birth': () => faker.date.birthdate().toLocaleDateString(),
-    'Date of Joining': () => faker.date.past({ years: 5 }).toLocaleDateString(),
-    'Department': () => faker.helpers.arrayElement(['IT', 'Sales', 'Marketing', 'HR']),
-    'Designation / Job Title': () => faker.person.jobTitle(),
-    'Employee Type': () => faker.helpers.arrayElement(['Permanent', 'Intern', 'Contract']),
-    'Employment Status': () => faker.helpers.arrayElement(['Active', 'On Notice']),
-    'Leave Type': () => faker.helpers.arrayElement(['Annual', 'Sick', 'Casual']),
-    'Leave Status': () => faker.helpers.arrayElement(['Approved', 'Pending', 'Rejected']),
-    'Check-in Time': () => faker.date.recent().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-    'Check-out Time': () => faker.date.recent().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-    'Total Hours Worked': () => faker.number.int({ min: 7, max: 9 }),
-    'Total No Days': () => 30,
-    'LOP Days': () => faker.number.int({ min: 0, max: 2 }),
-    'No of Days Paid': () => 28,
-
-    // Payroll Fields
-    'Annual CTC': () => formatINRCurrency(faker.finance.amount({ min: 300000, max: 2500000, dec: 0 })),
-    'Monthly CTC': () => formatINRCurrency(faker.finance.amount({ min: 25000, max: 200000, dec: 0 })),
-    'Monthly Fixed Gross': () => formatINRCurrency(faker.finance.amount({ min: 22000, max: 180000, dec: 0 })),
-    'Earned Gross': () => formatINRCurrency(faker.finance.amount({ min: 20000, max: 170000, dec: 0 })),
-    'Basic': () => formatINRCurrency(faker.finance.amount({ min: 10000, max: 80000, dec: 0 })),
-    'HRA': () => formatINRCurrency(faker.finance.amount({ min: 5000, max: 40000, dec: 0 })),
-    'PF Gross': () => formatINRCurrency(faker.finance.amount({ min: 20000, max: 160000, dec: 0 })),
-    'Bonus': () => formatINRCurrency(faker.finance.amount({ min: 0, max: 20000, dec: 0 })),
-    'Special Allowance': () => formatINRCurrency(faker.finance.amount({ min: 2000, max: 50000, dec: 0 })),
-    'Employee PF': () => formatINRCurrency(faker.finance.amount({ min: 1800, max: 5000, dec: 0 })),
-    'Employee ESIC': () => formatINRCurrency(faker.finance.amount({ min: 100, max: 500, dec: 0 })),
-    'TDS': () => formatINRCurrency(faker.finance.amount({ min: 0, max: 15000, dec: 0 })),
-    'PT': () => formatINRCurrency(faker.finance.amount({ min: 150, max: 200, dec: 0 })),
-    'Tot.Deduction': () => formatINRCurrency(faker.finance.amount({ min: 2000, max: 20000, dec: 0 })),
-    'Net Salary': () => formatINRCurrency(faker.finance.amount({ min: 18000, max: 150000, dec: 0 })),
-    'Variable Pay': () => formatINRCurrency(faker.finance.amount({ min: 0, max: 30000, dec: 0 })),
-    'Salary Release': () => formatINRCurrency(faker.finance.amount({ min: 18000, max: 150000, dec: 0 })),
-    'Salary Hold': () => formatINRCurrency(0),
-    'Advance Recovered': () => formatINRCurrency(0),
-    'Actual Payout': () => formatINRCurrency(faker.finance.amount({ min: 18000, max: 150000, dec: 0 })),
-    'Emplr PF': () => formatINRCurrency(faker.finance.amount({ min: 1800, max: 5000, dec: 0 })),
-    'Emplr ESI': () => formatINRCurrency(faker.finance.amount({ min: 100, max: 500, dec: 0 })),
-};
-
-const generateMockData = (fields, count = 15) => {
-    return Array.from({ length: count }, () => {
+const generateDummyData = (fields, count) => {
+    const data = [];
+    for (let i = 0; i < count; i++) {
         const row = {};
         fields.forEach(field => {
-            const generator = fieldToFakerMap[field] || (() => faker.lorem.word());
-            row[field] = generator();
+            switch (field) {
+                case 'Employee ID': row[field] = `EMP${101 + i}`; break;
+                case 'Full Name': row[field] = faker.person.fullName(); break;
+                case 'Email': row[field] = faker.internet.email(); break;
+                case 'Department': row[field] = faker.commerce.department(); break;
+                case 'Basic Salary': row[field] = `INR ${faker.finance.amount(30000, 80000, 0)}`; break;
+                case 'Net Pay': row[field] = `INR ${faker.finance.amount(25000, 70000, 0)}`; break;
+                default: row[field] = 'N/A';
+            }
         });
-        return row;
+        data.push(row);
+    }
+    return data;
+};
+
+const DraggableHeader = ({ field, index, moveColumn }) => {
+    const ref = React.useRef(null);
+    const [, drop] = useDrop({
+        accept: 'HEADER',
+        hover(item) {
+            if (!ref.current) return;
+            const dragIndex = item.index;
+            const hoverIndex = index;
+            if (dragIndex === hoverIndex) return;
+            moveColumn(dragIndex, hoverIndex);
+            item.index = hoverIndex;
+        },
     });
+    const [{ isDragging }, drag] = useDrag({
+        type: 'HEADER',
+        item: { field, index },
+        collect: (monitor) => ({ isDragging: monitor.isDragging() }),
+    });
+    drag(drop(ref));
+    return (
+        <th ref={ref} className={`cursor-move ${isDragging ? 'opacity-50' : ''}`}>
+            {field}
+        </th>
+    );
 };
 
 const PreviewReport = () => {
-    const location = useLocation();
-    const navigate = useNavigate();
-    const { reportName, selectedFields, filters, reportDateRange } = location.state || {};
-    
-    const [mockData, setMockData] = useState([]);
-    const [orderedFields, setOrderedFields] = useState(selectedFields || []);
-    
-    const dragItem = useRef(null);
-    const dragOverItem = useRef(null);
+    const initialFields = ['Employee ID', 'Full Name', 'Email', 'Department', 'Basic Salary', 'Net Pay'];
+    const [columns, setColumns] = useState(initialFields);
+    const dummyData = useMemo(() => generateDummyData(columns, 10), [columns]);
 
-    useEffect(() => {
-        if (!selectedFields || selectedFields.length === 0) {
-            navigate('/reports-analytics/builder/create');
-        } else {
-            setMockData(generateMockData(selectedFields));
-            setOrderedFields(selectedFields);
-        }
-    }, [selectedFields, navigate]);
-
-    const handleSort = () => {
-        let _orderedFields = [...orderedFields];
-        const draggedItemContent = _orderedFields.splice(dragItem.current, 1)[0];
-        _orderedFields.splice(dragOverItem.current, 0, draggedItemContent);
-        dragItem.current = null;
-        dragOverItem.current = null;
-        setOrderedFields(_orderedFields);
+    const moveColumn = (dragIndex, hoverIndex) => {
+        const draggedField = columns[dragIndex];
+        const newFields = [...columns];
+        newFields.splice(dragIndex, 1);
+        newFields.splice(hoverIndex, 0, draggedField);
+        setColumns(newFields);
     };
 
-    if (!selectedFields) {
-        return null; // Or a loading spinner
-    }
-
     return (
+        <DndProvider backend={HTML5Backend}>
         <div className="space-y-6">
             <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                    <FileText size={24} className="text-primary" />
-                    <h1 className="text-2xl font-bold">Report Preview: {reportName}</h1>
+                <div>
+                    <h1 className="text-2xl font-bold">Report Preview: Active Employees</h1>
+                    <p className="text-base-content/70">Drag and drop headers to reorder columns.</p>
                 </div>
                 <div className="flex gap-2">
-                    <button onClick={() => navigate('/reports-analytics/builder/create', { state: { isEditing: true, name: reportName, fields: orderedFields, filters, reportDateRange } })} className="btn btn-outline">
-                        <Edit size={16} /> Edit
-                    </button>
-                    <button className="btn btn-secondary">
-                        <Save size={16} /> Save Report
-                    </button>
+                    <Link to="/reports-analytics/builder/create" className="btn btn-outline"><Edit size={16}/> Edit Report</Link>
+                    <button className="btn btn-outline"><Save size={16}/> Save Report</button>
                     <div className="dropdown dropdown-end">
-                        <button tabIndex={0} className="btn btn-primary">
-                            <Download size={16} /> Export
-                        </button>
+                        <label tabIndex={0} className="btn btn-primary"><Download size={16}/> Export Report</label>
                         <ul tabIndex={0} className="dropdown-content menu p-2 shadow bg-base-100 rounded-box w-52">
                             <li key="pdf"><a>Export as PDF</a></li>
                             <li key="excel"><a>Export as Excel</a></li>
@@ -125,34 +85,21 @@ const PreviewReport = () => {
                 </div>
             </div>
 
-            <div className="card bg-base-100 shadow-xl">
+            <div className="card bg-base-100 shadow-lg border border-base-300">
                 <div className="card-body">
                     <div className="overflow-x-auto">
-                        <table className="table table-zebra">
+                        <table className="table table-zebra w-full">
                             <thead>
                                 <tr>
-                                    {orderedFields.map((field, index) => (
-                                        <th 
-                                            key={field}
-                                            draggable
-                                            onDragStart={() => (dragItem.current = index)}
-                                            onDragEnter={() => (dragOverItem.current = index)}
-                                            onDragEnd={handleSort}
-                                            onDragOver={(e) => e.preventDefault()}
-                                            className="cursor-grab hover:bg-base-200 transition-colors"
-                                        >
-                                            <div className="flex items-center gap-2">
-                                                <GripVertical size={16} className="text-base-content/40" />
-                                                {field}
-                                            </div>
-                                        </th>
+                                    {columns.map((field, index) => (
+                                        <DraggableHeader key={field} field={field} index={index} moveColumn={moveColumn} />
                                     ))}
                                 </tr>
                             </thead>
                             <tbody>
-                                {mockData.map((row, rowIndex) => (
+                                {dummyData.map((row, rowIndex) => (
                                     <tr key={rowIndex}>
-                                        {orderedFields.map(field => <td key={field}>{row[field]}</td>)}
+                                        {columns.map(col => <td key={col}>{row[col]}</td>)}
                                     </tr>
                                 ))}
                             </tbody>
@@ -161,6 +108,7 @@ const PreviewReport = () => {
                 </div>
             </div>
         </div>
+        </DndProvider>
     );
 };
 

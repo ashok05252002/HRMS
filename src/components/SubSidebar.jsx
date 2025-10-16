@@ -84,6 +84,7 @@ const SubSidebar = ({ menu, onClose }) => {
         { label: 'Reviewer Hierarchy', path: '/settings/reviewer-hierarchy', icon: UsersIcon },
         { label: 'Increment Rules', path: '/settings/increment-rules', icon: DollarSign },
         { label: 'Shift Roaster', path: '/settings/shift-roaster', icon: CalendarDays },
+        { label: 'Payslip Generator', path: '/settings/payslip-generator', icon: FileText },
         { label: 'Feedback Forms', path: '/settings/feedback-forms', icon: MessageSquare },
         { label: 'Notification Rules', path: '/settings/notification-rules', icon: Bell },
         { label: 'Access Control (RBAC)', path: '/settings/access-control', icon: Shield },

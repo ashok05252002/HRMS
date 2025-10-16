@@ -33,7 +33,7 @@ const IncrementLetter = () => {
               </ul>
               <p>We look forward to your continued dedication and contributions.</p>
               <p>Sincerely,</p>
-              <p><strong>HR Department</strong><br/>Pro-People Inc.</p>
+              <p><strong>HR Department</strong><br/>HRMS Inc.</p>
             </div>
             <div className="card-actions justify-end mt-6">
               <button className="btn"><Send size={16} /> Notify Employee</button>
